@@ -1,5 +1,7 @@
 import asyncio
 import argparse
+import json
+import os
 from datetime import datetime, timezone, timedelta
 from azure.identity import DefaultAzureCredential
 from msgraph import GraphServiceClient
@@ -12,7 +14,26 @@ async def main():
 
     print(f"Starting audit for secrets expiring within {args.days} days...")
 
-    credential = DefaultAzureCredential()
+    # Load config
+    tenant_id = None
+    config_path = "audit_config.json"
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, "r") as f:
+                config = json.load(f)
+                tenant_id = config.get("tenant_id")
+                if tenant_id and "ENTER_YOUR" in tenant_id:
+                    tenant_id = None # Ignore placeholder
+        except Exception as e:
+            print(f"Warning: Failed to read {config_path}: {e}")
+
+    if tenant_id:
+        print(f"Using Tenant ID from config: {tenant_id}")
+        credential = DefaultAzureCredential(tenant_id=tenant_id)
+    else:
+        print("Using default tenant from environment/CLI context.")
+        credential = DefaultAzureCredential()
+
     # Scopes are not strictly required for client credentials flow via DefaultAzureCredential 
     # if the env vars are set, but helpful if using interactive auth to prompt correctly.
     # However, GraphServiceClient handles this internally often. 
