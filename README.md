@@ -48,9 +48,30 @@ You can create a file named `audit_config.json` in the same directory to specify
    python entra_app_secret_audit.py --output results.csv
    ```
 
+### Find Unused Applications
+
+1. Run the script to find Service Principals that haven't signed in for 365 days (default):
+   ```bash
+   python entra_unused_apps.py
+   ```
+
+2. Custom lookback period (e.g., 90 days) and CSV export:
+   ```bash
+   python entra_unused_apps.py --days 90 --output unused.csv
+   ```
+
 ## Permissions
 
-To run this tool, the identity (User or Service Principal) requires the following **Microsoft Graph** permissions:
+To run this tool, the identity (User or Service Principal) requires **Microsoft Graph** permissions.
+
+### `entra_app_secret_audit.py` (Secret Audit)
+- **Permission**: `Application.Read.All`
+- **Type**: Delegated or Application
+
+### `entra_unused_apps.py` (Unused Apps)
+- **Permission**: `AuditLog.Read.All` OR `Directory.Read.All`
+- **Type**: Delegated or Application
+- **Note**: Reading `signInActivity` requires these higher-privilege permissions. `Application.Read.All` is **not** sufficient.
 
 ### Delegated (User Context - `az login`)
 - **Permission**: `Application.Read.All`
