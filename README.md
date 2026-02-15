@@ -86,10 +86,42 @@ To run this tool, the identity (User or Service Principal) requires **Microsoft 
 - **Permission**: `AuditLog.Read.All` OR `Directory.Read.All`
 - **Type**: Delegated or Application
 
+### Report New Defender for Cloud Items
+
+Find new Security Recommendations and Attack Paths that appeared in the last X days (default: 7).
+
+1. Run the report:
+   ```bash
+   python defender_new_items.py
+   ```
+
+2. Custom lookback and export:
+   ```bash
+   python defender_new_items.py --days 14 --output defender_report.csv
+   ```
+
+## Permissions
+
+To run this tool, the identity (User or Service Principal) requires **Microsoft Graph** permissions and **Azure RBAC** permissions.
+
+### `entra_app_secret_audit.py` (Secret Audit)
+- **Permission**: `Application.Read.All`
+- **Type**: Delegated or Application
+
+### `entra_unused_apps.py` (Unused Apps)
+- **Permission**: `AuditLog.Read.All` OR `Directory.Read.All`
+- **Type**: Delegated or Application
+
 ### `entra_orphaned_apps.py` (Orphaned Apps)
 - **Permission**: `Application.Read.All` AND `User.Read.All` (or `Directory.Read.All`)
 - **Type**: Delegated or Application
-- **Note**: `User.Read.All` is required to check if owners are disabled.
+
+### `defender_new_items.py` (Defender Report)
+- **Role**: `Security Reader` (Azure RBAC) on the Subscription(s).
+- **Library**: Requires `azure-mgmt-resourcegraph`.
+  ```bash
+  pip install azure-mgmt-resourcegraph
+  ```
 
 ### Delegated (User Context - `az login`)
 - **Permission**: `Application.Read.All`
