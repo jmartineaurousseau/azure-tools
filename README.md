@@ -1,6 +1,6 @@
 # Entra ID App Secret Audit Tool
 
-This tool audits your Microsoft Entra ID (formerly Azure AD) tenant for Application Registrations with secrets or certificates that are about to expire.
+This tool audits your Microsoft Entra ID (formerly Azure AD) tenant for Application Registrations with secrets or certificates that are about to expire. It can also export the findings to a CSV file.
 
 ## Prerequisites
 
@@ -43,6 +43,9 @@ You can create a file named `audit_config.json` in the same directory to specify
 
    # Custom threshold (e.g., 60 days)
    python entra_app_secret_audit.py --days 60
+
+   # Export results to CSV
+   python entra_app_secret_audit.py --output results.csv
    ```
 
 ## Permissions

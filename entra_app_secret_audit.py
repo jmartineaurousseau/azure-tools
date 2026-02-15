@@ -1,6 +1,7 @@
 import asyncio
 import argparse
 import json
+import csv
 import os
 from datetime import datetime, timezone, timedelta
 from azure.identity import DefaultAzureCredential
@@ -10,6 +11,7 @@ from msgraph.generated.models.application import Application
 async def main():
     parser = argparse.ArgumentParser(description="Audit Entra ID App Registrations for expiring secrets and certificates.")
     parser.add_argument("--days", type=int, default=30, help="Number of days to look ahead for expiration (default: 30)")
+    parser.add_argument("--output", help="Path to export results as CSV (e.g., results.csv)")
     args = parser.parse_args()
 
     print(f"Starting audit for secrets expiring within {args.days} days...")
@@ -125,6 +127,19 @@ async def main():
             print("-" * 110)
             for item in apps_with_expiring_creds:
                 print(f"{item['App'][:28]:<30} | {item['Type']:<12} | {item['DaysLeft']:<10} | {str(item['Expires']):<30} | {item['AppId']}")
+
+        # Export to CSV if requested
+        if args.output:
+            csv_file = args.output
+            print(f"\nExporting results to {csv_file}...")
+            try:
+                with open(csv_file, mode='w', newline='', encoding='utf-8') as file:
+                    writer = csv.DictWriter(file, fieldnames=["App", "AppId", "Type", "KeyId", "Expires", "DaysLeft"])
+                    writer.writeheader()
+                    writer.writerows(apps_with_expiring_creds)
+                print("Export complete.")
+            except Exception as e:
+                print(f"Failed to export to CSV: {e}")
 
     except Exception as e:
         print(f"An error occurred: {e}")
