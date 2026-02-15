@@ -60,6 +60,20 @@ You can create a file named `audit_config.json` in the same directory to specify
    python entra_unused_apps.py --days 90 --output unused.csv
    ```
 
+### Find Orphaned Applications
+
+Identify applications with **no owners** or where **all owners are disabled/deleted**.
+
+1. Run the audit:
+   ```bash
+   python entra_orphaned_apps.py
+   ```
+
+2. Export results:
+   ```bash
+   python entra_orphaned_apps.py --output orphaned.csv
+   ```
+
 ## Permissions
 
 To run this tool, the identity (User or Service Principal) requires **Microsoft Graph** permissions.
@@ -71,7 +85,11 @@ To run this tool, the identity (User or Service Principal) requires **Microsoft 
 ### `entra_unused_apps.py` (Unused Apps)
 - **Permission**: `AuditLog.Read.All` OR `Directory.Read.All`
 - **Type**: Delegated or Application
-- **Note**: Reading `signInActivity` requires these higher-privilege permissions. `Application.Read.All` is **not** sufficient.
+
+### `entra_orphaned_apps.py` (Orphaned Apps)
+- **Permission**: `Application.Read.All` AND `User.Read.All` (or `Directory.Read.All`)
+- **Type**: Delegated or Application
+- **Note**: `User.Read.All` is required to check if owners are disabled.
 
 ### Delegated (User Context - `az login`)
 - **Permission**: `Application.Read.All`
