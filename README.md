@@ -25,7 +25,6 @@ You can create a file named `audit_config.json` in the same directory to specify
     "tenant_id": "your-tenant-id-here"
 }
 ```
-*Note: This file is ignored by git to prevent accidental commitment of sensitive data.*
 
 ## Usage
 
