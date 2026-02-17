@@ -74,17 +74,7 @@ Identify applications with **no owners** or where **all owners are disabled/dele
    python entra_orphaned_apps.py --output orphaned.csv
    ```
 
-## Permissions
 
-To run this tool, the identity (User or Service Principal) requires **Microsoft Graph** permissions.
-
-### `entra_app_secret_audit.py` (Secret Audit)
-- **Permission**: `Application.Read.All`
-- **Type**: Delegated or Application
-
-### `entra_unused_apps.py` (Unused Apps)
-- **Permission**: `AuditLog.Read.All` OR `Directory.Read.All`
-- **Type**: Delegated or Application
 
 ### Report New Defender for Cloud Items
 
@@ -151,12 +141,25 @@ You can deploy this tool as an Azure Function App using the provided Bicep templ
     az login
     ```
 
-2.  Run the deployment script:
+2.  Configure your deployment:
+    Edit `bicep/config.json` with your desired values:
+    ```json
+    {
+        "subscriptionId": "your-subscription-id",
+        "resourceGroupName": "rg-azure-tools",
+        "location": "canadacentral",
+        "functionAppName": "func-azure-tools-001",
+        "storageAccountName": "staztools001"
+    }
+    ```
+
+3.  Run the deployment script:
     ```powershell
-    ./bicep/deploy.ps1 -Location canadacentral
+    ./bicep/deploy.ps1
     ```
     This script will:
-    - Create a Resource Group (`rg-azure-tools` by default).
+    - Read configuration from `bicep/config.json`.
+    - Create the Resource Group (if it doesn't exist).
     - Deploy the infrastructure (Function App, Storage, App Service Plan, App Insights).
     - Publish the Python code to the Function App.
     - Output the name of the deployed Function App.

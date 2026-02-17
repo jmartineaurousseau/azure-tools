@@ -7,10 +7,10 @@ param resourceGroupName string = 'rg-azure-tools'
 param location string = 'eastus'
 
 @description('The name of the function app')
-param functionAppName string = 'func-azure-tools-${uniqueString(subscription().id, resourceGroupName)}'
+param functionAppName string
 
 @description('The name of the storage account')
-param storageAccountName string = 'staztools${uniqueString(subscription().id, resourceGroupName)}'
+param storageAccountName string
 
 // Resource Group
 resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
