@@ -1,2 +1,4 @@
 azure-identity
 msgraph-sdk
+azure-functions
+azure-mgmt-resourcegraph

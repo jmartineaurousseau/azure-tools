@@ -134,17 +134,58 @@ To run this tool, the identity (User or Service Principal) requires **Microsoft 
 - **Type**: Application
 - **Description**: Allows the app to read all applications without a signed-in user.
 
-## Deployment (Future)
+## Deployment
 
-### Azure Functions / Automation Account
-This script is designed to use `DefaultAzureCredential`. When deployed to Azure resources:
-1. Enable **System Assigned Managed Identity** on the Function App or Automation Account.
-2. Grant the Managed Identity the `Application.Read.All` permission in Microsoft Graph:
-   ```powershell
-   # Example PowerShell to grant permission
-   $TenantId = "your-tenant-id"
-   $AppId = "your-managed-identity-object-id" # OR output of (Get-AzFunctionApp).Identity.PrincipalId
-   $GraphAppId = "00000003-0000-0000-c000-000000000000" # Microsoft Graph
-   
-   # ... (Requires MSGraph PowerShell permissions to assign roles)
-   ```
+You can deploy this tool as an Azure Function App using the provided Bicep templates.
+
+### Prerequisites
+
+- [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+- [Azure Functions Core Tools](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=windows%2Cisolated-process%2Cnode-v4%2Cpython-v2%2Chttp-trigger%2Ccontainer-apps&pivots=programming-language-python#install-the-azure-functions-core-tools)
+- PowerShell (to run the deployment script)
+
+### Deploying to Azure
+
+1.  Login to Azure:
+    ```bash
+    az login
+    ```
+
+2.  Run the deployment script:
+    ```powershell
+    ./bicep/deploy.ps1 -Location canadacentral
+    ```
+    This script will:
+    - Create a Resource Group (`rg-azure-tools` by default).
+    - Deploy the infrastructure (Function App, Storage, App Service Plan, App Insights).
+    - Publish the Python code to the Function App.
+    - Output the name of the deployed Function App.
+
+### Permissions (Post-Deployment)
+
+After deployment, the Function App's System Assigned Managed Identity needs permissions.
+You must grant the following Graph API permissions to the Managed Identity:
+- `Application.Read.All`
+- `AuditLog.Read.All` (or `Directory.Read.All`)
+- `User.Read.All`
+
+You can do this via PowerShell (AzureAD / Microsoft.Graph modules) or manually in the Portal (Enterprise Applications -> [Function App Name] -> Permissions).
+
+For `defender_new_items`, grant the Managed Identity the **Security Reader** role on the Subscription.
+
+### Local Development
+
+1.  Create `local.settings.json` (optional, for local testing):
+    ```json
+    {
+      "IsEncrypted": false,
+      "Values": {
+        "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+        "FUNCTIONS_WORKER_RUNTIME": "python"
+      }
+    }
+    ```
+2.  Run locally:
+    ```bash
+    func start
+    ```
