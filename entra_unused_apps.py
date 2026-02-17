@@ -39,13 +39,19 @@ async def main():
         
         # We need to select signInActivity. 
         # Note: signInActivity requires specific permissions. Use $select to be efficient.
-        query_params = {
-            "$select": ["appId", "displayName", "signInActivity", "id"]
-        }
+        # We need to select signInActivity. 
+        # Note: signInActivity requires specific permissions. Use $select to be efficient.
+        from msgraph.generated.service_principals.service_principals_request_builder import ServicePrincipalsRequestBuilder
+        
+        request_config = ServicePrincipalsRequestBuilder.ServicePrincipalsRequestBuilderGetRequestConfiguration(
+            query_parameters = ServicePrincipalsRequestBuilder.ServicePrincipalsRequestBuilderGetQueryParameters(
+                select = ["appId", "displayName", "signInActivity", "id"]
+            )
+        )
 
         # Iterating service principals
         # Using a simple list fetch for MVP. Pagination should be handled for large tenants.
-        result = await graph_client.service_principals.get(request_configuration={'query_parameters': query_params})
+        result = await graph_client.service_principals.get(request_configuration=request_config)
 
         unused_apps = []
         today = datetime.now(timezone.utc)
@@ -55,10 +61,11 @@ async def main():
             for sp in result.value:
                 last_sign_in = None
                 
-                # Check signInActivity
-                # signInActivity property has lastSignInDateTime
-                if sp.sign_in_activity and sp.sign_in_activity.last_sign_in_date_time:
-                    last_sign_in = sp.sign_in_activity.last_sign_in_date_time
+                # Check signInActivity safely
+                sign_in_activity = getattr(sp, "sign_in_activity", None)
+                
+                if sign_in_activity and hasattr(sign_in_activity, 'last_sign_in_date_time'):
+                    last_sign_in = sign_in_activity.last_sign_in_date_time
                 
                 # Logic:
                 # 1. If never signed in (last_sign_in is None) -> It's unused (technically unused forever)

@@ -93,13 +93,21 @@ def timer_audit_unused_apps(myTimer: func.TimerRequest) -> None:
         }
         
         try:
-            result = await graph_client.service_principals.get(request_configuration={'query_parameters': query_params})
+            from msgraph.generated.service_principals.service_principals_request_builder import ServicePrincipalsRequestBuilder
+            request_config = ServicePrincipalsRequestBuilder.ServicePrincipalsRequestBuilderGetRequestConfiguration(
+                query_parameters = ServicePrincipalsRequestBuilder.ServicePrincipalsRequestBuilderGetQueryParameters(
+                    select = ["appId", "displayName", "signInActivity", "id"]
+                )
+            )
+
+            result = await graph_client.service_principals.get(request_configuration=request_config)
             unused_apps = []
             if result and result.value:
                 for sp in result.value:
                     last_sign_in = None
-                    if sp.sign_in_activity and sp.sign_in_activity.last_sign_in_date_time:
-                        last_sign_in = sp.sign_in_activity.last_sign_in_date_time
+                    sign_in_activity = getattr(sp, "sign_in_activity", None)
+                    if sign_in_activity and hasattr(sign_in_activity, 'last_sign_in_date_time'):
+                        last_sign_in = sign_in_activity.last_sign_in_date_time
                     
                     if last_sign_in is None or last_sign_in <= threshold_date:
                         unused_apps.append({
