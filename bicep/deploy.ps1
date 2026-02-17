@@ -16,12 +16,13 @@ if ($config.subscriptionId -and $config.subscriptionId -ne "00000000-0000-0000-0
     az account set --subscription $config.subscriptionId
 }
 
-$params = @{
-    resourceGroupName  = $config.resourceGroupName
-    location           = $config.location
-    functionAppName    = $config.functionAppName
-    storageAccountName = $config.storageAccountName
-}
+$params = @(
+    "resourceGroupName=$($config.resourceGroupName)",
+    "location=$($config.location)",
+    "functionAppName=$($config.functionAppName)",
+    "storageAccountName=$($config.storageAccountName)",
+    "deployAppInsights=$($config.deployAppInsights)"
+)
 
 if ($WhatIf) {
     Write-Host "Running What-If deployment..."

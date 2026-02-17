@@ -12,6 +12,9 @@ param functionAppName string
 @description('The name of the storage account')
 param storageAccountName string
 
+@description('Deploy Application Insights')
+param deployAppInsights bool = true
+
 // Resource Group
 resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   name: resourceGroupName
@@ -30,6 +33,13 @@ module storage 'br/public:avm/res/storage/storage-account:0.9.1' = {
   }
 }
 
+
+// Existing Storage Account Reference (for keys)
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
+  scope: rg
+  name: storageAccountName
+}
+
 // App Service Plan Module
 module appServicePlan 'br/public:avm/res/web/serverfarm:0.2.4' = {
   scope: rg
@@ -43,7 +53,7 @@ module appServicePlan 'br/public:avm/res/web/serverfarm:0.2.4' = {
 }
 
 // Log Analytics Workspace Module
-module workspace 'br/public:avm/res/operational-insights/workspace:0.7.0' = {
+module workspace 'br/public:avm/res/operational-insights/workspace:0.7.0' = if (deployAppInsights) {
   scope: rg
   name: 'lawDeployment'
   params: {
@@ -54,7 +64,7 @@ module workspace 'br/public:avm/res/operational-insights/workspace:0.7.0' = {
 }
 
 // Application Insights Module
-module appInsights 'br/public:avm/res/insights/component:0.4.1' = {
+module appInsights 'br/public:avm/res/insights/component:0.4.1' = if (deployAppInsights) {
   scope: rg
   name: 'aiDeployment'
   params: {
@@ -65,7 +75,6 @@ module appInsights 'br/public:avm/res/insights/component:0.4.1' = {
 }
 
 // Function App Module
-// Note: AVM site module parameters might vary slightly per version. Using standard properties.
 module functionApp 'br/public:avm/res/web/site:0.9.0' = {
   scope: rg
   name: 'funcDeployment'
@@ -76,12 +85,11 @@ module functionApp 'br/public:avm/res/web/site:0.9.0' = {
     // serverFarmResourceId is the output from serverfarm module 
     serverFarmResourceId: appServicePlan.outputs.resourceId
     siteConfig: {
-      appSettings: [
+      appSettings: union([
         {
           name: 'AzureWebJobsStorage'
-          // Construct connection string. AVM output for storage keys might need verification.
-          // Assuming standard output structure.
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${listKeys(storage.outputs.resourceId, '2021-09-01').keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
+          // Use the key from the existing resource reference
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
         }
         {
           name: 'FUNCTIONS_WORKER_RUNTIME'
@@ -91,6 +99,7 @@ module functionApp 'br/public:avm/res/web/site:0.9.0' = {
            name: 'FUNCTIONS_EXTENSION_VERSION'
            value: '~4'
         }
+      ], deployAppInsights ? [
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
           value: appInsights.outputs.instrumentationKey
@@ -99,13 +108,16 @@ module functionApp 'br/public:avm/res/web/site:0.9.0' = {
            name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
            value: appInsights.outputs.connectionString
         }
-      ]
+      ] : [])
       linuxFxVersion: 'PYTHON|3.11'
     }
     managedIdentities: {
         systemAssigned: true
     }
   }
+  dependsOn: [
+    storage // Explicit dependency ensure storage is created before keys are accessed
+  ]
 }
 
 // Output Function App Name
