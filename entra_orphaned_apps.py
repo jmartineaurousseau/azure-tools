@@ -28,12 +28,8 @@ async def main():
         except Exception as e:
             pass
 
-    if tenant_id:
-        print(f"Using Tenant ID from config: {tenant_id}")
-        credential = DefaultAzureCredential(tenant_id=tenant_id)
-    else:
-        print("Using default tenant from environment/CLI context.")
-        credential = DefaultAzureCredential()
+    print("Using default tenant from environment/CLI context.")
+    credential = DefaultAzureCredential()
 
     try:
         # We need Application.Read.All (for apps) and User.Read.All (to check accountEnabled)
@@ -55,15 +51,16 @@ async def main():
         #     )
         # )
         
-        query_params = {
-            "$select": ["id", "appId", "displayName"],
-            "$expand": ["owners"]
-        }
+        from msgraph.generated.applications.applications_request_builder import ApplicationsRequestBuilder
 
-        # Dealing with pagination manually or letting SDK handle it?
-        # SDK default get() handles pages? No, usually returns a collection object we need to iterate.
-        
-        result = await graph_client.applications.get(request_configuration={'query_parameters': query_params})
+        request_config = ApplicationsRequestBuilder.ApplicationsRequestBuilderGetRequestConfiguration(
+            query_parameters = ApplicationsRequestBuilder.ApplicationsRequestBuilderGetQueryParameters(
+                select = ["id", "appId", "displayName"],
+                expand = ["owners"]
+            )
+        )
+
+        result = await graph_client.applications.get(request_configuration=request_config)
 
         orphaned_apps = []
 

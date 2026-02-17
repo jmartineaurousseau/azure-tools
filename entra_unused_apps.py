@@ -28,12 +28,8 @@ async def main():
         except Exception as e:
             print(f"Warning: Failed to read {config_path}: {e}")
 
-    if tenant_id:
-        print(f"Using Tenant ID from config: {tenant_id}")
-        credential = DefaultAzureCredential(tenant_id=tenant_id)
-    else:
-        print("Using default tenant from environment/CLI context.")
-        credential = DefaultAzureCredential()
+    print("Using default tenant from environment/CLI context.")
+    credential = DefaultAzureCredential()
 
     try:
         # User needs AuditLog.Read.All or Directory.Read.All to read signInActivity

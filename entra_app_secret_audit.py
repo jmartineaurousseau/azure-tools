@@ -29,12 +29,8 @@ async def main():
         except Exception as e:
             print(f"Warning: Failed to read {config_path}: {e}")
 
-    if tenant_id:
-        print(f"Using Tenant ID from config: {tenant_id}")
-        credential = DefaultAzureCredential(tenant_id=tenant_id)
-    else:
-        print("Using default tenant from environment/CLI context.")
-        credential = DefaultAzureCredential()
+    print("Using default tenant from environment/CLI context.")
+    credential = DefaultAzureCredential()
 
     # Scopes are not strictly required for client credentials flow via DefaultAzureCredential 
     # if the env vars are set, but helpful if using interactive auth to prompt correctly.

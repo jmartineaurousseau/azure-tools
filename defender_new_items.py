@@ -29,12 +29,8 @@ async def main():
         except Exception:
             pass
 
-    if tenant_id:
-        print(f"Using Tenant ID from config: {tenant_id}")
-        credential = DefaultAzureCredential(tenant_id=tenant_id)
-    else:
-        print("Using default credential from environment/CLI context.")
-        credential = DefaultAzureCredential()
+    print("Using default credential from environment/CLI context.")
+    credential = DefaultAzureCredential()
 
     try:
         # Initialize Resource Graph Client
