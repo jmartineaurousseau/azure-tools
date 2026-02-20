@@ -3,12 +3,25 @@ param(
 )
 
 # Read Configuration
-$configPath = Join-Path $PSScriptRoot "config.json"
+$configPath = Join-Path $PSScriptRoot "bicep-config.json"
 if (-not (Test-Path $configPath)) {
     Write-Error "Configuration file not found at $configPath"
     exit 1
 }
 $config = Get-Content $configPath | ConvertFrom-Json
+
+
+# Check for Azure Functions Core Tools
+if (-not (Get-Command func -ErrorAction SilentlyContinue)) {
+    Write-Warning "Azure Functions Core Tools not found. Attempting to install via Winget..."
+    winget install Microsoft.Azure.FunctionsCoreTools --source winget --accept-package-agreements --accept-source-agreements
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Failed to install Azure Functions Core Tools via Winget. Please install manually."
+        exit 1
+    }
+    # Refresh path for current session
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+}
 
 # Set Subscription
 if ($config.subscriptionId -and $config.subscriptionId -ne "00000000-0000-0000-0000-000000000000") {
@@ -20,8 +33,7 @@ $params = @(
     "resourceGroupName=$($config.resourceGroupName)",
     "location=$($config.location)",
     "functionAppName=$($config.functionAppName)",
-    "storageAccountName=$($config.storageAccountName)",
-    "deployAppInsights=$($config.deployAppInsights)"
+    "storageAccountName=$($config.storageAccountName)"
 )
 
 if ($WhatIf) {

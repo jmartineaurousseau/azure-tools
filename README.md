@@ -194,3 +194,20 @@ For `defender_new_items`, grant the Managed Identity the **Security Reader** rol
     ```bash
     func start
     ```
+
+## Deployment Script
+
+To deploy the infrastructure and function app code, use the provided PowerShell script:
+
+```powershell
+.\bicep\deploy.ps1
+```
+
+This script will:
+1.  Check if **Azure Functions Core Tools** (`func`) is installed.
+    -   If not found, it attempts to install it automatically via `winget`.
+2.  Deploy the Bicep infrastructure (Resource Group, Storage Account, Function App).
+3.  Publish the Python function code to the deployed Function App.
+
+**Configuration:**
+Ensure you have a `bicep/bicep-config.json` file with your environment details (subscription, resource group, etc.).
