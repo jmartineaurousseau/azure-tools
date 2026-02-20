@@ -209,4 +209,5 @@ __marimo__/
 
 audit_config.json
 bicep/config.json
+bicep/config.json
 *.csv
