@@ -57,7 +57,7 @@ async def main():
             Name=properties.displayName, 
             Severity=properties.metadata.severity, 
             Status=properties.status.code, 
-            ChangeDate=properties.status.statusChangeDate, 
+            ChangeDate=todatetime(properties.status.statusChangeDate), 
             Resource=id
         | order by ChangeDate desc
         """
@@ -76,7 +76,7 @@ async def main():
             Name=properties.displayName, 
             Severity=properties.riskLevel, 
             Status=properties.status, 
-            ChangeDate=properties.creationTime, 
+            ChangeDate=todatetime(properties.creationTime), 
             Resource=id
         | where ChangeDate > ago({days}d) or isnull(ChangeDate)
         | order by ChangeDate desc

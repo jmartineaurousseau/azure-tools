@@ -22,7 +22,8 @@ You can create a file named `audit_config.json` in the same directory to specify
 **audit_config.json**:
 ```json
 {
-    "tenant_id": "your-tenant-id-here"
+    "tenant_id": "your-tenant-id-here",
+    "subscription_id": "your-subscription-id-here"
 }
 ```
 
@@ -33,6 +34,7 @@ You can create a file named `audit_config.json` in the same directory to specify
 1. Log in to Azure CLI:
    ```bash
    az login --tenant <your-tenant-id>
+   az login --identity # if using a managed identity
    ```
    *Note: Ensure the account you log in with has the necessary permissions (see below).*
 
