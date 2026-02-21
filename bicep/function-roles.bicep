@@ -24,7 +24,7 @@ resource storageRoleAssignmentQueue 'Microsoft.Authorization/roleAssignments@202
 resource storageRoleAssignmentTable 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(resourceGroup().id, 'Storage Table Data Contributor', principalId)
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319cd167f43')
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')
     principalId: principalId
     principalType: 'ServicePrincipal'
   }

@@ -1,10 +1,5 @@
-targetScope = 'subscription'
-
-@description('The name of the resource group to deploy to')
-param resourceGroupName string = 'rg-azure-tools'
-
 @description('The location to deploy resources to')
-param location string = 'canadacentral'
+param location string = resourceGroup().location
 
 @description('The name of the function app')
 param functionAppName string
@@ -12,28 +7,59 @@ param functionAppName string
 @description('The name of the storage account')
 param storageAccountName string
 
-// Resource Group
-resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: resourceGroupName
-  location: location
-}
+@description('Whether to deploy application insights')
+param deployAppInsights bool = false
 
 // Storage Account Module
 module storage 'br/public:avm/res/storage/storage-account:0.9.1' = {
-  scope: rg
   name: 'storageDeployment'
   params: {
     name: storageAccountName
     location: location
     skuName: 'Standard_LRS'
     allowBlobPublicAccess: false
+    publicNetworkAccess: 'Enabled'
+    networkAcls: {
+      bypass: 'AzureServices'
+      defaultAction: 'Allow'
+    }
+    blobServices: {
+      containers: [
+        {
+          name: 'app-package'
+          publicAccess: 'None'
+        }
+      ]
+    }
+  }
+}
+
+
+// Log Analytics Workspace
+resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = if(deployAppInsights) {
+  name: 'law-${functionAppName}'
+  location: location
+  properties: {
+    sku: {
+      name: 'PerGB2018'
+    }
+  }
+}
+
+// Application Insights
+resource appInsights 'Microsoft.Insights/components@2020-02-02' = if(deployAppInsights) {
+  name: 'appi-${functionAppName}'
+  location: location
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    WorkspaceResourceId: deployAppInsights ? logAnalytics.id : ''
   }
 }
 
 
 // App Service Plan Module
 module appServicePlan 'br/public:avm/res/web/serverfarm:0.2.4' = {
-  scope: rg
   name: 'planDeployment'
   params: {
     name: 'asp-${functionAppName}'
@@ -44,8 +70,7 @@ module appServicePlan 'br/public:avm/res/web/serverfarm:0.2.4' = {
 }
 
 // Function App Module
-module functionApp 'br/public:avm/res/web/site:0.9.0' = {
-  scope: rg
+module functionApp 'br/public:avm/res/web/site:0.13.0' = {
   name: 'funcDeployment'
   params: {
     name: functionAppName
@@ -60,18 +85,33 @@ module functionApp 'br/public:avm/res/web/site:0.9.0' = {
           value: storageAccountName
         }
         {
-          name: 'FUNCTIONS_WORKER_RUNTIME'
-          value: 'python'
-        }
-        {
-           name: 'FUNCTIONS_EXTENSION_VERSION'
-           value: '~4'
+          name: 'WEBSITE_TIME_ZONE'
+          value: 'Eastern Standard Time'
         }
       ]
-      linuxFxVersion: 'PYTHON|3.11'
     }
     managedIdentities: {
         systemAssigned: true
+    }
+    appInsightResourceId: deployAppInsights ? appInsights.id : ''
+    functionAppConfig: {
+      deployment: {
+        storage: {
+          type: 'blobContainer'
+          value: 'https://${storageAccountName}.blob.${environment().suffixes.storage}/app-package'
+          authentication: {
+            type: 'SystemAssignedIdentity'
+          }
+        }
+      }
+      scaleAndConcurrency: {
+        instanceMemoryMB: 2048
+        maximumInstanceCount: 40
+      }
+      runtime: {
+        name: 'python'
+        version: '3.11'
+      }
     }
   }
 }
@@ -79,7 +119,6 @@ module functionApp 'br/public:avm/res/web/site:0.9.0' = {
 // Role Assignments for Function App Identity (System Assigned)
 module functionRoleAssignments 'function-roles.bicep' = {
   name: 'function-roles'
-  scope: rg
   params: {
     principalId: functionApp.outputs.systemAssignedMIPrincipalId
   }

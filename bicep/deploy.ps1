@@ -30,26 +30,26 @@ if ($config.subscriptionId -and $config.subscriptionId -ne "00000000-0000-0000-0
 }
 
 $params = @(
-    "resourceGroupName=$($config.resourceGroupName)",
     "location=$($config.location)",
     "functionAppName=$($config.functionAppName)",
-    "storageAccountName=$($config.storageAccountName)"
+    "storageAccountName=$($config.storageAccountName)",
+    "deployAppInsights=$($config.deployAppInsights)"
 )
 
 if ($WhatIf) {
     Write-Host "Running What-If deployment..."
-    az deployment sub create `
+    az deployment group create `
         --name "azure-tools-deploy-$(Get-Date -Format 'yyyyMMddHHmm')" `
-        --location $config.location `
+        --resource-group $config.resourceGroupName `
         --template-file "bicep/main.bicep" `
         --parameters $params `
         --what-if
 }
 else {
     Write-Host "Starting deployment..."
-    $deploymentOutput = az deployment sub create `
+    $deploymentOutput = az deployment group create `
         --name "azure-tools-deploy-$(Get-Date -Format 'yyyyMMddHHmm')" `
-        --location $config.location `
+        --resource-group $config.resourceGroupName `
         --template-file "bicep/main.bicep" `
         --parameters $params `
         --output json | ConvertFrom-Json
@@ -58,6 +58,18 @@ else {
     Write-Host "Deployed Function App: $appName"
 
     if ($appName) {
+        Write-Host "Verifying deploying user has Storage Blob Data Contributor access..."
+        $storageId = az storage account show -n $config.storageAccountName -g $config.resourceGroupName --query id -o tsv
+        $userId = az ad signed-in-user show --query id -o tsv
+        
+        # Check if role is assigned
+        $roleExists = az role assignment list --assignee $userId --role "Storage Blob Data Contributor" --scope $storageId --query "[].id" -o tsv
+        if (-not $roleExists) {
+            Write-Host "Granting Storage Blob Data Contributor to current user on $config.storageAccountName..."
+            az role assignment create --assignee $userId --role "Storage Blob Data Contributor" --scope $storageId
+            Start-Sleep -Seconds 30 # Give RBAC time to propagate
+        }
+
         Write-Host "Publishing Function App code..."
         # Navigate to root to run func command, assuming deploy.ps1 is in bicep/
         Push-Location "$PSScriptRoot/.."

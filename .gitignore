@@ -210,3 +210,6 @@ __marimo__/
 audit_config.json
 *.csv
 bicep/bicep-config.json
+bicep/main.json
+local.settings.json
+host.json

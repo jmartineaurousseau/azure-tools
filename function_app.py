@@ -27,7 +27,7 @@ def log_results(title, results):
     for item in results:
         logging.info(item)
 
-@app.schedule(schedule="0 0 8 * * *", arg_name="myTimer", run_on_startup=False,
+@app.schedule(schedule="0 0 9 * * 1", arg_name="myTimer", run_on_startup=False,
               use_monitor=False) 
 def timer_audit_secrets(myTimer: func.TimerRequest) -> None:
     if myTimer.past_due:
@@ -78,7 +78,7 @@ def timer_audit_secrets(myTimer: func.TimerRequest) -> None:
     import asyncio
     asyncio.run(run_audit())
 
-@app.schedule(schedule="0 0 8 * * *", arg_name="myTimer", run_on_startup=False,
+@app.schedule(schedule="0 0 9 * * 1", arg_name="myTimer", run_on_startup=False,
               use_monitor=False) 
 def timer_audit_unused_apps(myTimer: func.TimerRequest) -> None:
     logging.info('Starting audit for unused apps...')
@@ -122,7 +122,7 @@ def timer_audit_unused_apps(myTimer: func.TimerRequest) -> None:
     import asyncio
     asyncio.run(run_audit())
 
-@app.schedule(schedule="0 0 8 * * *", arg_name="myTimer", run_on_startup=False,
+@app.schedule(schedule="0 0 9 * * 1", arg_name="myTimer", run_on_startup=False,
               use_monitor=False) 
 def timer_audit_orphaned_apps(myTimer: func.TimerRequest) -> None:
     logging.info('Starting audit for orphaned apps...')
@@ -182,7 +182,7 @@ def timer_audit_orphaned_apps(myTimer: func.TimerRequest) -> None:
     import asyncio
     asyncio.run(run_audit())
 
-@app.schedule(schedule="0 0 8 * * *", arg_name="myTimer", run_on_startup=False,
+@app.schedule(schedule="0 0 9 * * 1", arg_name="myTimer", run_on_startup=False,
               use_monitor=False) 
 def timer_defender_report(myTimer: func.TimerRequest) -> None:
     logging.info('Starting Defender for Cloud new items report...')
