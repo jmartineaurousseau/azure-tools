@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Azure CLI commands - intended to be run in Azure Cloud Shell (bash).
+# Cloud Shell is already authenticated, so no `az login` is needed.
+
+set -euo pipefail
+
+# --- Variables ---------------------------------------------------------------
+SUBSCRIPTION_ID=""        # leave empty to use the current default subscription
+LOCATION_A="canadaeast"      # 3 identities
+LOCATION_B="canadacentral"   # 1 identity
+
+# Resource group holding 3 identities, and a second RG holding 1
+RESOURCE_GROUP_A=""
+RESOURCE_GROUP_B=""
+
+# User-assigned managed identity names
+IDENTITY_A1="uami-a1"
+IDENTITY_A2="uami-a2"
+IDENTITY_A3="uami-a3"
+IDENTITY_B1="uami-b1"
+
+# --- Setup -------------------------------------------------------------------
+if [[ -n "$SUBSCRIPTION_ID" ]]; then
+  az account set --subscription "$SUBSCRIPTION_ID"
+fi
+
+echo "Active subscription:"
+az account show --query "{name:name, id:id, tenant:tenantId}" -o table
+
+# --- Commands ----------------------------------------------------------------
+
+# User-assigned managed identities: 3 in RESOURCE_GROUP_A, 1 in RESOURCE_GROUP_B
+for name in "$IDENTITY_A1" "$IDENTITY_A2" "$IDENTITY_A3"; do
+  az identity create \
+    --name "$name" \
+    --resource-group "$RESOURCE_GROUP_A" \
+    --location "$LOCATION_A" \
+    -o table
+done
+
+az identity create \
+  --name "$IDENTITY_B1" \
+  --resource-group "$RESOURCE_GROUP_B" \
+  --location "$LOCATION_B" \
+  -o table
+
